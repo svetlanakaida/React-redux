@@ -11,7 +11,8 @@ const initialState = {
   messages: [],
   name: 'Reggie',
   newMessageEntry: '',
-  channels:[]
+  channels:[], 
+  newChannelEntry: ''
 };
 
 // ACTION TYPES
@@ -21,6 +22,9 @@ const GET_MESSAGE = 'GET_MESSAGE';
 const GET_MESSAGES = 'GET_MESSAGES';
 const WRITE_MESSAGE = 'WRITE_MESSAGE';
 const GET_CHANNELS_FROM_SERVER = 'GET_CHANNELS_FROM_SERVER';
+const NEW_CHANNEL = 'NEW_CHANNEL';
+const GET_CHANNEL = 'GET_CHANNEL';
+
 
 // ACTION CREATORS
 
@@ -49,6 +53,14 @@ export function getChannels (channels) {
   return action;
 }
 
+export function newChannel (channelName) {
+  const action = { type: NEW_CHANNEL, channelName };
+  return action;
+}
+export function getNewChannel (channel) {
+  const action = { type: GET_CHANNEL, channel };
+  return action;
+}
 // THUNK CREATORS
 
 export function fetchMessages () {
@@ -88,6 +100,20 @@ export function fetchChannels () {
         dispatch(action);
       });
   }
+}
+
+export function postChannel (channel) {
+
+  return function thunk (dispatch) {
+    return axios.post('/api/channels', channel)
+      .then(res => res.data)
+      .then(newChannel => {
+        const action = getNewChannel(newChannel);
+        dispatch(action);
+        socket.emit('new-channel', newChannel);
+      });
+  }
+
 }
 
 // REDUCER
@@ -146,6 +172,18 @@ function reducer (state = initialState, action) {
       return {
         ...state,
         channels: action.channels
+      };
+
+      case NEW_CHANNEL:
+      return {
+        ...state,
+        newChannelEntry: action.channel
+      };
+
+      case GET_CHANNEL:
+      return {
+        ...state,
+        channel: [...state.channels, action.channel]
       };
 
     default:
